@@ -148,5 +148,3 @@ while has_function_calls(response.output) and iteration < max_iterations:
         for item in response.output:
             if hasattr(item, 'text') and item.text:
                 print(f"Agent Response: {item.text}")
-
-print("\n✓ Conversation complete!")
