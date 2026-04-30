@@ -26,7 +26,7 @@ openai = project.get_openai_client()
 # The openai client uses {PROJECT_ENDPOINT}/openai/v1 for file and vector store operations
 
 # Create vector store for RAG
-vector_store = openai.vector_stores.create(name="ProductInfoStore")
+vector_store = openai.vector_stores.create(name="ContosoStoresInfo")
 
 # Upload ALL store files to the vector store for RAG retrieval
 store_files = list(stores_directory.glob("*.md"))
@@ -41,23 +41,29 @@ for file_path in store_files:
             )
         print(f"  ✓ Uploaded: {file_path.name}")
 
-# Create agent with FileSearchTool (implements RAG - semantic retrieval)
-agent = project.agents.create_version(
-    agent_name="FileSearchAgent",
-    definition=PromptAgentDefinition(
-        model="gpt-4o-openhack",
-        instructions=(
-            "You are a helpful agent that searches through Contoso Pizza store information. "
-            "Use the file search tool to find relevant information from store files to answer user questions. "
-            "The file search will automatically retrieve the most relevant store information based on the user's query. "
-            "Provide accurate and helpful responses based on the retrieved information."
+# Try to retrieve existing agent, or create if it doesn't exist
+try:
+    agent = project.agents.get("MichelleOpenHackAgent")
+    print(f"Retrieved existing agent: {agent.name} (version: {agent.version})")
+except Exception:
+    print("Agent not found, creating new agent...")
+    agent = project.agents.create_version(
+        agent_name="MichelleOpenHackAgent",
+        definition=PromptAgentDefinition(
+            model="gpt-4o-openhack",
+            instructions=(
+                "You are a helpful agent that searches through Contoso Pizza store information. "
+                "Use the file search tool to find relevant information from store files to answer user questions. "
+                "The file search will automatically retrieve the most relevant store information based on the user's query. "
+                "Provide accurate and helpful responses based on the retrieved information."
+                "You will ask for a store location from the user, then use the file search tool to find information about that store, and then answer the user's question based on the retrieved information."
+                "You are an agent that helps customers order pizzas from Contoso pizza. You have a Gen-alpha personality, so you are friendly and helpful, but also a bit cheeky. You can provide information about Contoso Pizza and its retail stores. You help customers order a pizza of their chosen size, crust, and toppings. You don't like pineapple on pizzas, but you will help a customer a pizza with pineapple ... with some snark. Make sure you know the customer's name before placing an order on their behalf. You can't do anything except help customers order pizzas and give information about Contoso Pizza. You will gently deflect any other questions."
+            ),
+            tools=[FileSearchTool(vector_store_ids=[vector_store.id])],
         ),
-        tools=[FileSearchTool(vector_store_ids=[vector_store.id])],
-    ),
-    description="RAG-enabled agent for Contoso Pizza store information queries.",
-)
-
-print(f"Agent created: {agent.name} (version: {agent.version})")
+        description="RAG-enabled agent for Contoso Pizza store information queries.",
+    )
+    print(f"Agent created: {agent.name} (version: {agent.version})")
 
 # Example queries to test RAG retrieval
 queries = [
