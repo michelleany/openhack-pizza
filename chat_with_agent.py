@@ -12,14 +12,6 @@ project = AIProjectClient(
 )
 openai = project.get_openai_client()
 
-
-# List all agents in the project
-agents = project.agents.list()
-for agent in agents:
-    print(f"Agent: {agent.name}")
-
-print("--------------------------")
-
 # Create a conversation for multi-turn chat
 conversation = openai.conversations.create()
 
@@ -38,4 +30,3 @@ response = openai.responses.create(
     input="And what is the capital city?",
 )
 print(response.output_text)
-
